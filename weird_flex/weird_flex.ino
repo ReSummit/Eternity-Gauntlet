@@ -1,3 +1,8 @@
+#include <Servo.h>
+
+Servo myservo;  // Create servo object to control a servo
+int pos = 0;    // Store servo position
+
 /******************************************************************************
 Flex_Sensor_Example.ino
 Example sketch for SparkFun's flex sensors
@@ -23,16 +28,34 @@ const float R_DIV = 50000.0; // Measured resistance of 3.3k resistor
 
 // Upload the code, then try to adjust these values to more
 // accurately calculate bend degree.
-const float STRAIGHT_RESISTANCE = 37300.0; // resistance when straight
-const float BEND_RESISTANCE = 90000.0; // resistance at 90 deg
+//const float STRAIGHT_RESISTANCE = 37300.0; // resistance when straight
+//const float BEND_RESISTANCE = 90000.0; // resistance at 90 deg
 
-void setup() 
+/**
+ * Short:
+ *  Straight: 30.3k
+ *  Bend: 100k
+ *  
+ * Long:
+ *  Straight: 12.3k
+ *  Bend: 36k
+ */
+const float SHORT_STRAIGHT_RESISTANCE = 30300.0;
+const float SHORT_BEND_RESISTANCE = 100000.0;
+const float LONG_STRAIGHT_RESISTANCE = 12300.0;
+const float LONG_BEND_RESISTANCE = 36000.0;
+
+
+
+void setup()
 {
   Serial.begin(9600);
   pinMode(FLEX_PIN, INPUT);
+
+  myservo.attach(PA2);
 }
 
-void loop() 
+void loop()
 {
   // Read the ADC, and calculate voltage and resistance from it
   int flexADC = analogRead(FLEX_PIN);
@@ -40,14 +63,19 @@ void loop()
   Serial.println("flexADC= "+ String(flexADC)+" flexV = "+String(flexV));
   float flexR = R_DIV * (VCC / flexV - 1.0);
   Serial.println("Resistance: " + String(flexR) + " ohms");
-  Serial.println(flexR);
 
   // Use the calculated resistance to estimate the sensor's
   // bend angle:
-  float angle = map(flexR, STRAIGHT_RESISTANCE, BEND_RESISTANCE,
+  float angle = map(flexR, LONG_STRAIGHT_RESISTANCE, LONG_BEND_RESISTANCE,
                    0, 90.0);
   Serial.println("Bend: " + String(angle) + " degrees");
-  Serial.println();
 
-  delay(500);
+  // Write same angle to servo
+  float val = abs(angle)-35;  // Subtract 35 because lowest degree is 35 instead of 0 for some reason. Work in progress to fix.
+  Serial.println(val);
+  myservo.write(val);
+  
+  Serial.println();
+  
+  delay(50);
 }
