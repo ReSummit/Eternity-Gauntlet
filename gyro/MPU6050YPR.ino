@@ -6,7 +6,6 @@
 // These offsets were meant to calibrate MPU6050's internal DMP, but can be also useful for reading sensors. 
 // The effect of temperature has not been taken into account so I can't promise that it will work if you 
 // calibrate indoors and then use it outdoors. Best is to calibrate and use at the same room temperature.
-
 #include "I2Cdev.h"
 //#include "MPU6050.h" THIS MAKES IT EXPLODE
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -40,7 +39,8 @@ float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gra
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0x00, 0x00, '\r', '\n' };
 
-
+int isCalibrated = 0;
+bool runOnce = false;
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -87,14 +87,6 @@ Serial.begin( 115200 );
 
   mpu.initialize();
   devStatus = mpu.dmpInitialize();
-  // start message
-  Serial.println("\nMPU6050 Calibration Sketch");
-  delay(2000);
-  Serial.println("\nYour MPU6050 should be placed in horizontal position, with package letters facing up. \nDon't touch it until you see a finish message.\n");
-  delay(3000);
-  // verify connection
-  Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
-  delay(1000);
 
   if (devStatus == 0) {
 
@@ -108,24 +100,31 @@ Serial.begin( 115200 );
     packetSize = mpu.dmpGetFIFOPacketSize();
   }
 
-  startCalibration(); // GETTING OFFSET VALUES
-
+  if( !runOnce ) {
+    runOnce = true;
+    // start message
+    Serial.println("\nMPU6050 Calibration Sketch");
+    delay(2000);
+    // verify connection
+    Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    resetGyroSensors();
+  }
+  
   // SETTING NEW OFFSETS
+  /*
   mpu.setXAccelOffset( ax_offset );
+  Serial.println( ax_offset );
   mpu.setYAccelOffset( ay_offset );
+  Serial.println( ay_offset );
   mpu.setZAccelOffset( az_offset );
+  Serial.println( az_offset );
   mpu.setXGyroOffset( gx_offset );
+  Serial.println( gx_offset );
   mpu.setYGyroOffset( gy_offset );
+  Serial.println( gy_offset );
   mpu.setZGyroOffset( gz_offset );
-
-/*
-  mpu.setXAccelOffset( -3880 );
-  mpu.setYAccelOffset(1647);
-  mpu.setZAccelOffset( 1724 );
-  mpu.setXGyroOffset( 39 );
-  mpu.setYGyroOffset( 103 );
-  mpu.setZGyroOffset( -34 );
-  */
+  Serial.println( gz_offset );
+  */  
 }
 
 void startCalibration() {
@@ -213,6 +212,10 @@ void getypr()
 
 
 void loop() {
+  if( isCalibrated < 1 ) {
+    resetGyroSensors();
+    isCalibrated += setOffsets();
+  }
   getypr();
   Serial.print("ypr\t");
   Serial.print(ypr[0] * 180/M_PI);
@@ -294,4 +297,23 @@ void calibration(){
 
     if (ready==6) break;
   }
+}
+
+void resetGyroSensors() {
+  startCalibration();
+  Serial.println( "RESETTING GYRO" );
+  mpu.reset();
+  delay( 1000 );
+  setup();
+}
+
+int setOffsets() {
+  Serial.println( "SETTING OFFSETS" );
+  mpu.setXAccelOffset( ax_offset );
+  mpu.setYAccelOffset( ay_offset );
+  mpu.setZAccelOffset( az_offset );
+  mpu.setXGyroOffset( gx_offset );
+  mpu.setYGyroOffset( gy_offset );
+  mpu.setZGyroOffset( gz_offset );
+  return 1;
 }
