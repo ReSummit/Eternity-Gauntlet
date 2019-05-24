@@ -32,9 +32,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // for max range. You'll have to tweak them as necessary to match the servos you
 // have!
 
-// TODO
-#define SERVOT_MIN  150 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOT_MAX  450 // this is the 'maximum' pulse length count (out of 4096)
+// GOOD
+#define SERVOT_MIN  90 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVOT_MAX  500 // this is the 'maximum' pulse length count (out of 4096)
 
 // GOOD
 #define SERVOI_MIN  95 // this is the 'minimum' pulse length count (out of 4096)
@@ -73,8 +73,8 @@ void loop() {
   // Change servo[letter]
   // Change port on pwm
 
-  int servoMin = SERVOI_MIN;
-  int servoMax = SERVOI_MAX;
+  int servoMin = SERVOP_MIN;
+  int servoMax = SERVOP_MAX;
 
   
   Serial.println("Going from half to max");
@@ -86,7 +86,7 @@ void loop() {
   delay(2000);
   
   
-  /*
+  
   Serial.println("Going from half to min");
   for (uint16_t pulselen = servoMin + (servoMax-servoMin)/5; pulselen > servoMin; pulselen--) {
     pwm.setPWM(servonum, 0, pulselen);
@@ -94,7 +94,7 @@ void loop() {
     delay(300);
   }
   delay(10000);
-  */
+  
   
   
 
