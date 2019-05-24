@@ -48,7 +48,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVOR_MIN  85 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOR_MAX  486 // this is the 'maximum' pulse length count (out of 4096)
 
-// DOUBLE CHECK
+// GOOD
 #define SERVOP_MIN  105 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOP_MAX  440 // this is the 'maximum' pulse length count (out of 4096)
 
