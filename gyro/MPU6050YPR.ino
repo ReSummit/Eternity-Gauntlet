@@ -104,7 +104,7 @@ Serial.begin( 115200 );
     runOnce = true;
     // start message
     Serial.println("\nMPU6050 Calibration Sketch");
-    delay(2000);
+    delay(1000);
     // verify connection
     Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
     resetGyroSensors();
@@ -212,9 +212,10 @@ void getypr()
 
 
 void loop() {
-  if( isCalibrated < 1 ) {
-    resetGyroSensors();
-    isCalibrated += setOffsets();
+  if( isCalibrated == 0 ) {
+    //resetGyroSensors();
+    setOffsets();
+    isCalibrated = 1;
   }
   getypr();
   Serial.print("ypr\t");
@@ -303,11 +304,11 @@ void resetGyroSensors() {
   startCalibration();
   Serial.println( "RESETTING GYRO" );
   mpu.reset();
-  delay( 1000 );
+  delay( 1500 );
   setup();
 }
 
-int setOffsets() {
+void setOffsets() {
   Serial.println( "SETTING OFFSETS" );
   mpu.setXAccelOffset( ax_offset );
   mpu.setYAccelOffset( ay_offset );
@@ -315,5 +316,4 @@ int setOffsets() {
   mpu.setXGyroOffset( gx_offset );
   mpu.setYGyroOffset( gy_offset );
   mpu.setZGyroOffset( gz_offset );
-  return 1;
 }
