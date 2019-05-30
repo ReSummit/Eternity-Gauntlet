@@ -21,6 +21,7 @@ const int I_FLEX_PIN = PA1; // Pin connected to voltage divider output
 const int M_FLEX_PIN = PA2; // Pin connected to voltage divider output
 const int R_FLEX_PIN = PA3; // Pin connected to voltage divider output
 const int P_FLEX_PIN = PA4; // Pin connected to voltage divider output
+const int E_FLEX_PIN = PA5; // Pin connected to voltage divider output
 
 // Measure the voltage at 5V and the actual resistance of your
 // 47k resistor, and enter them below:
@@ -54,6 +55,10 @@ const float SHORT_R_DIV = 60500.0;
 #define SERVOG_MIN  70 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOG_MAX  490 // this is the 'maximum' pulse length count (out of 4096)
 
+// Elbow FIXME!!!!!!!!!!!!!!
+#define SERVOE_MIN  70 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVOE_MAX  490 // this is the 'maximum' pulse length count (out of 4096)
+
 // Array of samples used for averaging
 #define SAMPLES 3 // Number of samples used for avergaing
 uint16_t samples1[SAMPLES];
@@ -61,6 +66,7 @@ uint16_t samples2[SAMPLES];
 uint16_t samples3[SAMPLES];
 uint16_t samples4[SAMPLES];
 uint16_t samples5[SAMPLES];
+uint16_t samples6[SAMPLES];
 
 // Initialize straight and bent resistances for flex sensors
 const float SHORT_STRAIGHT_RESISTANCE = 26250.0;
@@ -174,6 +180,7 @@ Serial.begin( 115200 );
     samples3[i] = 0;
     samples4[i] = 0;
     samples5[i] = 0;
+    samples6[i] = 0;
   }
 
   // Set up flex sensors
@@ -182,6 +189,7 @@ Serial.begin( 115200 );
   pinMode(M_FLEX_PIN, INPUT);
   pinMode(R_FLEX_PIN, INPUT);
   pinMode(P_FLEX_PIN, INPUT);
+  pinMode(E_FLEX_PIN, INPUT);
   
   // PWM Code:
   pwm.begin();
@@ -319,6 +327,7 @@ void loop() {
   uint16_t middleFlexADC = analogRead(M_FLEX_PIN);
   uint16_t ringFlexADC = analogRead(R_FLEX_PIN);
   uint16_t pinkyFlexADC = analogRead(P_FLEX_PIN);
+  uint16_t elbowFlexADC = analogRead(E_FLEX_PIN);
   
   // Calculate voltage
   float thumbFlexV = thumbFlexADC * VCC / 4096.0;
@@ -326,6 +335,7 @@ void loop() {
   float middleFlexV = middleFlexADC * VCC / 4096.0;
   float ringFlexV = ringFlexADC * VCC / 4096.0;
   float pinkyFlexV = pinkyFlexADC * VCC / 4096.0;
+  float elbowFlexV = elbowFlexADC * VCC / 4096.0;
 
   //Serial.println("longflexADC= "+ String(longFlexADC)+" longflexV = "+String(longFlexV));
   //Serial.println("shortflexADC= "+ String(shortFlexADC)+" shortflexV = "+String(shortFlexV));
@@ -336,6 +346,7 @@ void loop() {
   float middleFlexR = LONG_R_DIV * (VCC / middleFlexV - 1.0);
   float ringFlexR = LONG_R_DIV * (VCC / ringFlexV - 1.0);
   float pinkyFlexR = SHORT_R_DIV * (VCC / pinkyFlexV - 1.0);
+  float elbowFlexR = LONG_R_DIV * (VCC / elbowFlexV - 1.0);
   
   //Serial.println("Long Resistance: " + String(longFlexR) + " ohms");
   //Serial.println("Short Resistance: " + String(shortFlexR) + " ohms");
@@ -348,6 +359,7 @@ void loop() {
   float middlePulseLen = constrain(map(middleFlexR, LONG_STRAIGHT_RESISTANCE, LONG_BEND_RESISTANCE, SERVOM_MIN, SERVOM_MAX), SERVOM_MIN, SERVOM_MAX);
   float ringPulseLen = constrain(map(ringFlexR, LONG_STRAIGHT_RESISTANCE, LONG_BEND_RESISTANCE, SERVOR_MIN, SERVOR_MAX), SERVOR_MIN, SERVOR_MAX);
   float pinkyPulseLen = constrain(map(pinkyFlexR, SHORT_STRAIGHT_RESISTANCE, SHORT_BEND_RESISTANCE, SERVOP_MIN, SERVOP_MAX), SERVOP_MIN, SERVOP_MAX);
+  float elbowPulseLen = constrain(map(elbowFlexR, LONG_STRAIGHT_RESISTANCE, LONG_BEND_RESISTANCE, SERVOE_MIN, SERVOE_MAX), SERVOE_MIN, SERVOE_MAX);
 
   /*
   Serial.println("ThumbPulseLen: " + String(thumbPulseLen));
@@ -364,6 +376,7 @@ void loop() {
     samples3[i] = samples3[i+1];
     samples4[i] = samples4[i+1];
     samples5[i] = samples5[i+1];
+    samples6[i] = samples6[i+1];
   }
 
   // Set last element in array
@@ -372,6 +385,7 @@ void loop() {
   samples3[SAMPLES-1] = middlePulseLen;
   samples4[SAMPLES-1] = ringPulseLen;
   samples5[SAMPLES-1] = pinkyPulseLen;
+  samples6[SAMPLES-1] = elbowPulseLen;
 
   
   // Find average of samples
@@ -380,12 +394,14 @@ void loop() {
   uint16_t avg3 = 0;
   uint16_t avg4 = 0;
   uint16_t avg5 = 0;
+  uint16_t avg6 = 0;
   for(int i = 0; i < SAMPLES; i++){
     avg1 += (samples1[i]/SAMPLES);
     avg2 += (samples2[i]/SAMPLES);
     avg3 += (samples3[i]/SAMPLES);
     avg4 += (samples4[i]/SAMPLES);
     avg5 += (samples5[i]/SAMPLES);
+    avg6 += (samples6[i]/SAMPLES);
   }
 
   // Set the finger servos
@@ -394,6 +410,7 @@ void loop() {
   pwm.setPWM(2, 0, avg3);
   pwm.setPWM(3, 0, avg4);
   pwm.setPWM(4, 0, avg5);
+  pwm.setPWM(6, 0, avg6); // DOUBLE CHECK CONNECTIONS!!! (port 5 is used for gyro servo)
   
 
   // Set the big servo based on pitch
