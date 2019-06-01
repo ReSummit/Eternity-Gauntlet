@@ -162,6 +162,8 @@ Serial.begin( 115200 );
 
     packetSize = mpu.dmpGetFIFOPacketSize();
   }
+  pwm.reset();
+  delay(1000);
 
   if( !runOnce ) {
     runOnce = true;
@@ -172,6 +174,7 @@ Serial.begin( 115200 );
     Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
     resetGyroSensors();
   }
+
 
   // Initialize samples array
   for(int i = 0; i < SAMPLES; i++){
@@ -300,8 +303,9 @@ void getypr()
 
 
 void loop() {
+  
   if( isCalibrated == 0 ) {
-    //resetGyroSensors();
+    resetGyroSensors();
     setOffsets();
     isCalibrated = 1;
   }
@@ -310,7 +314,7 @@ void loop() {
   float yaw = ypr[0] * 180/M_PI;
   float pitch = ypr[1] * 180/M_PI;
   float roll = ypr[2] * 180/M_PI;
-
+ 
   /*
   Serial.print("ypr\t");
   Serial.print(yaw);
@@ -318,8 +322,8 @@ void loop() {
   Serial.print(pitch);
   Serial.print("\t");
   Serial.print(roll);
-  Serial.print("\n");
-  */
+  Serial.print("\n");*/
+  
 
   // Read value from pin
   uint16_t thumbFlexADC = analogRead(T_FLEX_PIN);
@@ -367,7 +371,7 @@ void loop() {
   Serial.println("MiddlePulseLen: " + String(middlePulseLen));
   Serial.println("RingPulseLen: " + String(ringPulseLen));
   Serial.println("PinkyPulseLen: " + String(pinkyPulseLen));
-  */
+ */
 
   // Shift array left
   for(int i = 0; i < SAMPLES - 1; i++){
@@ -410,7 +414,7 @@ void loop() {
   pwm.setPWM(2, 0, avg3);
   pwm.setPWM(3, 0, avg4);
   pwm.setPWM(4, 0, avg5);
-  pwm.setPWM(6, 0, avg6); // DOUBLE CHECK CONNECTIONS!!! (port 5 is used for gyro servo)
+  pwm.setPWM(6, 0, avg6); // DOUBLE CHECK CONNECTIONS!!! elbow
   
 
   // Set the big servo based on pitch
