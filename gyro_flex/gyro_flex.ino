@@ -16,12 +16,13 @@
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 // Initialize flex sensor pin for reading
-const int T_FLEX_PIN = PA0; // Pin connected to voltage divider output
-const int I_FLEX_PIN = PA1; // Pin connected to voltage divider output
+const int T_FLEX_PIN = PA4; // Pin connected to voltage divider output
+const int I_FLEX_PIN = PA3; // Pin connected to voltage divider output
 const int M_FLEX_PIN = PA2; // Pin connected to voltage divider output
-const int R_FLEX_PIN = PA3; // Pin connected to voltage divider output
+const int R_FLEX_PIN = PA1; // Pin connected to voltage divider output
 const int P_FLEX_PIN = PA4; // Pin connected to voltage divider output
 const int E_FLEX_PIN = PA5; // Pin connected to voltage divider output
+const int LED_PIN = PB11;
 
 // Measure the voltage at 5V and the actual resistance of your
 // 47k resistor, and enter them below:
@@ -44,8 +45,8 @@ const float SHORT_R_DIV = 60500.0;
 #define SERVOM_MAX  507 // this is the 'maximum' pulse length count (out of 4096)
 
 // Ring
-#define SERVOR_MIN  85 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOR_MAX  486 // this is the 'maximum' pulse length count (out of 4096)
+#define SERVOR_MIN  486 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVOR_MAX  85 // this is the 'maximum' pulse length count (out of 4096)
 
 // Pinky
 #define SERVOP_MIN  105 // this is the 'minimum' pulse length count (out of 4096)
@@ -162,8 +163,6 @@ Serial.begin( 115200 );
 
     packetSize = mpu.dmpGetFIFOPacketSize();
   }
-  pwm.reset();
-  delay(1000);
 
   if( !runOnce ) {
     runOnce = true;
@@ -174,7 +173,6 @@ Serial.begin( 115200 );
     Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
     resetGyroSensors();
   }
-
 
   // Initialize samples array
   for(int i = 0; i < SAMPLES; i++){
@@ -193,6 +191,7 @@ Serial.begin( 115200 );
   pinMode(R_FLEX_PIN, INPUT);
   pinMode(P_FLEX_PIN, INPUT);
   pinMode(E_FLEX_PIN, INPUT);
+  pinMode(LED_PIN,OUTPUT);
   
   // PWM Code:
   pwm.begin();
@@ -216,6 +215,9 @@ Serial.begin( 115200 );
   mpu.setZGyroOffset( gz_offset );
   Serial.println( gz_offset );
   */
+
+  digitalWrite(LED_PIN,HIGH);
+  
 }
 
 void startCalibration() {
@@ -303,9 +305,8 @@ void getypr()
 
 
 void loop() {
-  
   if( isCalibrated == 0 ) {
-    resetGyroSensors();
+    //resetGyroSensors();
     setOffsets();
     isCalibrated = 1;
   }
@@ -314,7 +315,7 @@ void loop() {
   float yaw = ypr[0] * 180/M_PI;
   float pitch = ypr[1] * 180/M_PI;
   float roll = ypr[2] * 180/M_PI;
- 
+
   /*
   Serial.print("ypr\t");
   Serial.print(yaw);
@@ -322,8 +323,8 @@ void loop() {
   Serial.print(pitch);
   Serial.print("\t");
   Serial.print(roll);
-  Serial.print("\n");*/
-  
+  Serial.print("\n");
+  */
 
   // Read value from pin
   uint16_t thumbFlexADC = analogRead(T_FLEX_PIN);
@@ -365,13 +366,13 @@ void loop() {
   float pinkyPulseLen = constrain(map(pinkyFlexR, SHORT_STRAIGHT_RESISTANCE, SHORT_BEND_RESISTANCE, SERVOP_MIN, SERVOP_MAX), SERVOP_MIN, SERVOP_MAX);
   float elbowPulseLen = constrain(map(elbowFlexR, LONG_STRAIGHT_RESISTANCE, LONG_BEND_RESISTANCE, SERVOE_MIN, SERVOE_MAX), SERVOE_MIN, SERVOE_MAX);
 
-  /*
+  ///*
   Serial.println("ThumbPulseLen: " + String(thumbPulseLen));
   Serial.println("IndexPulseLen: " + String(indexPulseLen));
   Serial.println("MiddlePulseLen: " + String(middlePulseLen));
   Serial.println("RingPulseLen: " + String(ringPulseLen));
   Serial.println("PinkyPulseLen: " + String(pinkyPulseLen));
- */
+  //*/
 
   // Shift array left
   for(int i = 0; i < SAMPLES - 1; i++){
@@ -414,7 +415,7 @@ void loop() {
   pwm.setPWM(2, 0, avg3);
   pwm.setPWM(3, 0, avg4);
   pwm.setPWM(4, 0, avg5);
-  pwm.setPWM(6, 0, avg6); // DOUBLE CHECK CONNECTIONS!!! elbow
+  pwm.setPWM(6, 0, avg6); // DOUBLE CHECK CONNECTIONS!!! (port 5 is used for gyro servo)
   
 
   // Set the big servo based on pitch
@@ -432,7 +433,7 @@ void loop() {
 
   Serial.println();
 
-  //delay( 100 );
+  //delay( 1000 );
 }
 
 //////////////////////////////  OFFSET FUNCTIONS  ////////////////////////////////////
